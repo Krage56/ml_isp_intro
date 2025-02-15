@@ -16,8 +16,8 @@ def euclidean_distance(X, Y) -> np.ndarray:
     np.ndarray of size M * N
         Each element of which is the Euclidean distance between the corresponding pair of vectors from the arrays X and Y
     """
-    raise NotImplementedError()
-
+    new_Y = Y[:, np.newaxis]
+    return np.transpose(np.sqrt(np.sum(np.pow(new_Y - X, 2), axis=2)))
 
 # 2 points
 def cosine_distance(X, Y) -> np.ndarray:
