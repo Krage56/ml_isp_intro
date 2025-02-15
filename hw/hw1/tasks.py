@@ -34,7 +34,9 @@ def cosine_distance(X, Y) -> np.ndarray:
     np.ndarray of size M * N
         Each element of which is the cosine distance between the corresponding pair of vectors from the arrays X and Y
     """
-    raise NotImplementedError()
+    new_Y = Y[:, np.newaxis]
+    dot_prod = np.transpose(np.sum(np.multiply(X, new_Y), axis=2)) / np.sqrt(np.sum(np.pow(X, 2), axis=1).reshape(-1, 1)) / np.sqrt(np.sum(np.pow(Y, 2), axis=1))
+    return (1 - dot_prod)
 
 
 # 1 point
