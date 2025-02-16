@@ -54,4 +54,5 @@ def manhattan_distance(X, Y) -> np.ndarray:
     np.ndarray of size M * N
         Each element of which is the manhattan distance between the corresponding pair of vectors from the arrays X and Y
     """
-    raise NotImplementedError()
+    new_Y = Y[:, np.newaxis]
+    return np.transpose(np.sum(np.abs(new_Y - X), axis=2))
