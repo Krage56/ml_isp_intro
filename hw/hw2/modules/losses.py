@@ -1,5 +1,5 @@
 import numpy as np
-
+import scipy as sp
 
 class BaseLoss:
     """
@@ -47,7 +47,8 @@ class LinearLoss(BaseLoss):
         -------
         : float
         """
-        pass
+        N = X.shape[0]
+        return np.sum(np.pow(X @ w - y, 2)) / N + np.sum(np.pow(w[1:], 2)) * self.l2_coef
 
     def grad(self, X, y, w):
         """
@@ -62,5 +63,8 @@ class LinearLoss(BaseLoss):
         -------
         : 1d numpy.ndarray
         """
-        pass
+        N = X.shape[0]
+        reg_add = np.copy(w)
+        reg_add[0] = 0
+        return (2.0 / N) * np.transpose(X) @ (X @ w - y) + 2 * self.l2_coef * reg_add
 
