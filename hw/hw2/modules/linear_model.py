@@ -63,6 +63,7 @@ class LinearModel:
         """
         if w_0 is None:
             w = np.zeros(X.shape[1])
+            w[0] = 1
         else:
             w = np.copy(w_0)
         i = 1
@@ -98,7 +99,8 @@ class LinearModel:
                 data_ind = perm[batch_start:batch_end]
                 data = X[data_ind]
                 y_data = y[data_ind]
-                history['log'].append([batch_start, batch_end])
+                if trace:
+                    history['log'].append([batch_start, batch_end])
             else:
                 # искренне надеюсь, что здесь
                 # просто перевесятся указатели
