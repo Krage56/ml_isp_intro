@@ -80,7 +80,7 @@ class LinearModel:
                 'time': [0],
                 "func": [],
                 "func_val": [],
-                "log": []
+                # "log": []
             }
         while i <= self.max_iter and (w_prev is None or np.sqrt(np.sum(np.pow(w_prev - w, 2))) > self.tol):
             # history['log'].append(i)
@@ -99,8 +99,8 @@ class LinearModel:
                 data_ind = perm[batch_start:batch_end]
                 data = X[data_ind]
                 y_data = y[data_ind]
-                if trace:
-                    history['log'].append([batch_start, batch_end])
+                # if trace:
+                #     history['log'].append([batch_start, batch_end])
             else:
                 # искренне надеюсь, что здесь
                 # просто перевесятся указатели
@@ -114,7 +114,7 @@ class LinearModel:
             # обязательную программу
             if trace:
                 end_time = time.time()
-                history['log'].append(f"delta_w = {np.sqrt(np.sum(np.pow(w_prev - w, 2)))}")
+                # history['log'].append(f"delta_w = {np.sqrt(np.sum(np.pow(w_prev - w, 2)))}")
                 # Запись времени производится на каждой итерации
                 history['time'][epoche_count - 1] += (end_time - start_time)
             if i % iters_per_epoch == 0:
@@ -131,6 +131,8 @@ class LinearModel:
             i += 1
 
         self._coef = w
+        if trace and len(history['func']) > 1 and history['time'][-1] == 0:
+            history['time'].pop()
         if trace:
             return history
 
