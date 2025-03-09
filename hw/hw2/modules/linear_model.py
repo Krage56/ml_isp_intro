@@ -181,4 +181,4 @@ class LinearModel:
         -------
         : float
         """
-        pass
+        return self.loss_function(X, y, self._coef)
