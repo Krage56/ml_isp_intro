@@ -28,16 +28,15 @@ class LinearModel:
         max_iter : int
             Max amount of epoches in method.
         """
-        self.obj_loss = loss_function
+        self.loss_function = loss_function
         self.batch_size = batch_size
         self.alpha = step_alpha
         self.beta = step_beta
         self.tol = tolerance
         self.max_iter = max_iter
         self.seed = random_seed
-        self.model_answer = None
+        self._coef = None
 
-    # TODO: валидация
     def fit(self, X, y, w_0=None, trace=False, X_val=None, y_val=None):
         """
 
@@ -75,16 +74,17 @@ class LinearModel:
             iters_per_epoches = 1
             rand_gen = None
         w_prev = None
-        epoche_count = 0
+        epoche_count = 1
         if trace:
             history = {
-                'time': [],
+                'time': [0],
                 "func": [],
                 "func_val": []
             }
-        else:
-            history = None
         while i <= self.max_iter and (w_prev is None or np.sum(np.pow(w_prev - w, 2)) < self.tol):
+            if trace:
+                start_time = time.time()
+            
             if iters_per_epoches != 1:
                 # Попробуем делать честное сэмплирование
                 data_ind = rand_gen.choice(ind, self.batch_size, replace=False)
@@ -95,20 +95,29 @@ class LinearModel:
                 # просто перевесятся указатели
                 data = X
                 y_data = y
-            grad = self.obj_loss.grad(data, y_data, w)
+            
+            grad = self.loss_function.grad(data, y_data, w)
             w_prev = np.copy(w)
             w = w - (self.alpha / pow(i, self.beta)) * grad
-            if trace and epoche_count == 0 or i // (epoche_count * iters_per_epoches) > 0:
-                epoche_count += 1
-                # Создаём новую запись об эпохе
-                # TODO
-            # Записываем дамп
-            # TODO
+            # Временная отсечка ставится, как только перестали считать
+            # обязательную программу
             if trace:
-                pass
+                end_time = time.time()
+            if trace and i // (epoche_count * iters_per_epoches) > 0:
+                epoche_count += 1
+                history['time'].append(0)
+                history['func'].append(self.loss_function.func(data, y_data, w))
+                if X_val is not None and y_val is not None:
+                    history['func_val'].append(self.loss_function.func(X_val, y_val, w))
+                else:
+                    history['func_val'].append(0)
+            # Запись времени производится на каждой итерации
+            if trace:
+                history['time'][epoche_count - 1] += (end_time - start_time)
+
             i += 1
 
-        self.model_answer = w
+        self._coef = w
         if trace:
             return history
 
