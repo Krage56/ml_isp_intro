@@ -62,16 +62,15 @@ class LinearModel:
             Each key correspond to list of metric values after each training epoch.
         """
         if w_0 is None:
-            w = np.array([1.0 for i in range(X.shape[1])])
+            w = np.zeros(X.shape[1])
         else:
             w = np.copy(w_0)
         i = 1
         if self.batch_size is not None:
-            iters_per_epoches = X.shape[0] // self.batch_size
+            iters_per_epoch = X.shape[0] // self.batch_size
             rand_gen = np.random.default_rng(self.seed)
-            ind = np.array([i for i in range(X.shape[0])])
         else:
-            iters_per_epoches = 1
+            iters_per_epoch = 1
             rand_gen = None
         w_prev = None
         epoche_count = 1
@@ -79,41 +78,53 @@ class LinearModel:
             history = {
                 'time': [0],
                 "func": [],
-                "func_val": []
+                "func_val": [],
+                "log": []
             }
-        while i <= self.max_iter and (w_prev is None or np.sum(np.pow(w_prev - w, 2)) < self.tol):
+        while i <= self.max_iter and (w_prev is None or np.sqrt(np.sum(np.pow(w_prev - w, 2))) > self.tol):
+            # history['log'].append(i)
             if trace:
                 start_time = time.time()
             
-            if iters_per_epoches != 1:
-                # Попробуем делать честное сэмплирование
-                data_ind = rand_gen.choice(ind, self.batch_size, replace=False)
+            if self.batch_size is not None and i % iters_per_epoch == 1:  
+                eta = self.alpha / np.float_power(epoche_count, self.beta)  
+                perm = rand_gen.permutation(X.shape[0])
+            elif self.batch_size is None:
+                eta = self.alpha / np.float_power(i, self.beta)
+            
+            if self.batch_size is not None:
+                batch_start = ((i - 1) % iters_per_epoch) * self.batch_size
+                batch_end = min(batch_start + self.batch_size, X.shape[0])
+                data_ind = perm[batch_start:batch_end]
                 data = X[data_ind]
                 y_data = y[data_ind]
+                history['log'].append([batch_start, batch_end])
             else:
                 # искренне надеюсь, что здесь
                 # просто перевесятся указатели
                 data = X
                 y_data = y
-            
+            # eta = self.alpha / np.float_power(i, self.beta)
             grad = self.loss_function.grad(data, y_data, w)
             w_prev = np.copy(w)
-            w = w - (self.alpha / pow(i, self.beta)) * grad
+            w = w - eta * grad
             # Временная отсечка ставится, как только перестали считать
             # обязательную программу
             if trace:
                 end_time = time.time()
-            if trace and i // (epoche_count * iters_per_epoches) > 0:
-                epoche_count += 1
-                history['time'].append(0)
-                history['func'].append(self.loss_function.func(data, y_data, w))
-                if X_val is not None and y_val is not None:
-                    history['func_val'].append(self.loss_function.func(X_val, y_val, w))
-                else:
-                    history['func_val'].append(0)
-            # Запись времени производится на каждой итерации
-            if trace:
+                history['log'].append(f"delta_w = {np.sqrt(np.sum(np.pow(w_prev - w, 2)))}")
+                # Запись времени производится на каждой итерации
                 history['time'][epoche_count - 1] += (end_time - start_time)
+            if i % iters_per_epoch == 0:
+                epoche_count += 1
+                if trace:
+                    history['time'].append(0)
+                    history['func'].append(self.loss_function.func(data, y_data, w))
+                    if X_val is not None and y_val is not None:
+                        history['func_val'].append(self.loss_function.func(X_val, y_val, w))
+                    else:
+                        history['func_val'].append(0)
+            
 
             i += 1
 
@@ -140,7 +151,7 @@ class LinearModel:
         : numpy.ndarray
             answers on a test set
         """
-        pass
+        return X @ self._coef
 
     def get_weights(self):
         """
@@ -151,7 +162,7 @@ class LinearModel:
         : numpy.ndarray
             1d model weights vector.
         """
-        pass
+        return self._coef
 
     def get_objective(self, X, y):
         """
